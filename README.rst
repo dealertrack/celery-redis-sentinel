@@ -2,10 +2,10 @@
 Celery Redis Sentinel
 =====================
 
-.. image:: https://badge.fury.io/py/celery_redis_sentinel.svg
+.. image:: https://badge.fury.io/py/celery-redis-sentinel.svg
     :target: http://badge.fury.io/py/celery-redis-sentinel
 
-.. image:: https://travis-ci.org/dealertrack/celery_redis_sentinel.svg?branch=master
+.. image:: https://travis-ci.org/dealertrack/celery-redis-sentinel.svg?branch=master
         :target: https://travis-ci.org/dealertrack/celery-redis-sentinel
 
 Celery broker and results backend implementation for

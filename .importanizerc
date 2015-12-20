@@ -1,0 +1,22 @@
+{
+    "exclude": [
+        "*/.tox/*"
+    ],
+    "groups": [
+        {
+            "type": "stdlib"
+        },
+        {
+            "type": "remainder"
+        },
+        {
+            "type": "packages",
+            "packages": [
+                "celery_redis_sentinel"
+            ]
+        },
+        {
+            "type": "local"
+        }
+    ]
+}
