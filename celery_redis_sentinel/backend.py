@@ -21,12 +21,6 @@ class RedisSentinelBackend(RedisBackend):
 
     @cached_property
     def client(self):
-        """
-        Custom implementation for getting redis client.
-
-        This property uses our dtplatform's ```get_central_redis_session`` to get
-        the redis sentinel session.
-        """
         params = self.connparams
         params.update({
             'sentinels': self.sentinels,
