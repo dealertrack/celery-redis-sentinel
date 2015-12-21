@@ -83,8 +83,8 @@ def ensure_redis_call(f, *args, **kwargs):
     attempts : int, optional
         Number of attempts to make with exponential ease-off.
         By default ``5`` is used which means the the wait time
-        before last retry will be 32 seconds. Also in that case
-        total wait time is 63 seconds.
+        before last retry will be 16 seconds. Also in that case
+        total wait time is 31 seconds.
     args : tuple
         Any arguments to be passed to ``f`` when calling it
     kwargs : dict
@@ -97,7 +97,7 @@ def ensure_redis_call(f, *args, **kwargs):
             return f(*args, **kwargs)
 
         except (ConnectionError, TimeoutError) as e:
-            if not attempts:
+            if i == attempts:
                 raise
             else:
                 wait = 2 ** i
