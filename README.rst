@@ -6,7 +6,11 @@ Celery Redis Sentinel
     :target: http://badge.fury.io/py/celery-redis-sentinel
 
 .. image:: https://travis-ci.org/dealertrack/celery-redis-sentinel.svg?branch=master
-        :target: https://travis-ci.org/dealertrack/celery-redis-sentinel
+    :target: https://travis-ci.org/dealertrack/celery-redis-sentinel
+
+.. image:: https://coveralls.io/repos/dealertrack/celery-redis-sentinel/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/dealertrack/celery-redis-sentinel?branch=master
+
 
 Celery broker and results backend implementation for
 `Redis Sentinel <http://redis.io/topics/sentinel>`_

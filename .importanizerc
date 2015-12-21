@@ -16,6 +16,12 @@
             ]
         },
         {
+            "type": "packages",
+            "packages": [
+                "test_tasks"
+            ]
+        },
+        {
             "type": "local"
         }
     ]

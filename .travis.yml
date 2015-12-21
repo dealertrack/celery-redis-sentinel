@@ -1,0 +1,19 @@
+language: python
+
+python:
+  - "3.5"
+  - "2.7"
+  - "pypy"
+
+sudo: false
+
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - pip install -r requirements-dev.txt
+  - pip install coveralls
+  - pip freeze
+
+# command to run tests, e.g. python setup.py test
+script: make check
+
+after_success: coveralls
