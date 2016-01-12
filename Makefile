@@ -19,6 +19,7 @@ help:
 	@echo "release - package and upload a release"
 	@echo "dist - package"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
+	@echo "livedocs - generate Sphinx HTML documentation and start auto-restart docs server"
 
 install:
 	pip install -r requirements-dev.txt
@@ -64,9 +65,8 @@ dist: clean
 	ls -l dist
 
 docs:
-	rm -f docs/celery_redis_sentinel.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ celery_redis_sentinel
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
-	open docs/_build/html/index.html
+	cd docs && make html && open _build/html/index.html
+
+livedocs:
+	cd docs && make livehtml
+
