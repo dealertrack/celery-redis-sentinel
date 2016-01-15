@@ -14,5 +14,6 @@ Submodules
    celery_redis_sentinel.backend
    celery_redis_sentinel.redis_sentinel
    celery_redis_sentinel.register
+   celery_redis_sentinel.task
    celery_redis_sentinel.transport
 

@@ -98,3 +98,13 @@ tasks which will block the scheduling until new master will be elected::
     add.delay(1, 2)
     # this will keep retrying until it succeeds
     ensure_redis_call(add.delay, 1, 2)
+
+Alternatively you can use a supplied abstract celery task subclass which provides
+same retrying behavior in the task definition itself::
+
+    # tasks.py
+    from celery_redis_sentinel.tasks import EnsuredRedisTask
+
+    @app.task(base=EnsuredRedisTask)
+    def add(a, b):
+        return a + b
