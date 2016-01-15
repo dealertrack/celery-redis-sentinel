@@ -3,7 +3,7 @@ License
 
 The MIT License (MIT)
 
-Copyright © 2015, dealertrack technologies
+Copyright © 2015-2016, dealertrack technologies
 
 ::
 
