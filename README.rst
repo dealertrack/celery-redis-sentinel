@@ -103,7 +103,7 @@ Alternatively you can use a supplied abstract celery task subclass which provide
 same retrying behavior in the task definition itself::
 
     # tasks.py
-    from celery_redis_sentinel.tasks import EnsuredRedisTask
+    from celery_redis_sentinel.task import EnsuredRedisTask
 
     @app.task(base=EnsuredRedisTask)
     def add(a, b):
