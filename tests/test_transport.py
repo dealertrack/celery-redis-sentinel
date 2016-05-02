@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import mock
 from kombu import Connection
+from redis import StrictRedis
 
 from celery_redis_sentinel.redis_sentinel import CelerySentinelConnectionPool
 from celery_redis_sentinel.transport import SentinelChannel, SentinelTransport
@@ -12,8 +13,9 @@ from test_tasks.tasks import app
 
 
 class TestSentinelChannel(object):
+    @mock.patch.object(StrictRedis, 'execute_command')  # needed since channel does client.info in __init__
     @mock.patch('celery_redis_sentinel.transport.get_redis_via_sentinel')
-    def test_sentinel_pool(self, mock_get_redis_via_sentinel):
+    def test_sentinel_pool(self, mock_get_redis_via_sentinel, mock_execute_command):
         connection = Connection()
         connection.transport_options = BROKER_TRANSPORT_OPTIONS
         transport = SentinelTransport(app=app, client=connection)
@@ -46,6 +48,9 @@ class TestSentinelChannel(object):
                        ('192.168.1.3', 26379)],
             service_name='master',
             socket_timeout=1,
+            socket_connect_timeout=mock.ANY,
+            socket_keepalive=mock.ANY,
+            socket_keepalive_options=mock.ANY,
         )
 
 
