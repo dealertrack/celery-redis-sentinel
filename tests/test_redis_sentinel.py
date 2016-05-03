@@ -4,11 +4,14 @@ from __future__ import absolute_import, print_function, unicode_literals
 import mock
 import pytest
 from redis import ConnectionError
+from redis.client import StrictRedis
 from redis.sentinel import SentinelConnectionPool
 
 from celery_redis_sentinel.redis_sentinel import (
     CelerySentinelConnectionPool,
     EnsuredRedisMixin,
+    ShortLivedSentinel,
+    ShortLivedStrictRedis,
     ensure_redis_call,
     get_redis_via_sentinel,
 )
@@ -23,12 +26,14 @@ class Foo(EnsuredRedisMixin, Bar):
     pass
 
 
-@mock.patch('celery_redis_sentinel.redis_sentinel.Sentinel')
-def test_get_redis_via_sentinel(mock_sentinel):
+def test_get_redis_via_sentinel():
+    mock_sentinel = mock.Mock()
+
     result = get_redis_via_sentinel(
         db=0,
         sentinels=['foo', 'bar'],
         service_name='master',
+        sentinel_class=mock_sentinel,
     )
 
     assert result == mock_sentinel.return_value.master_for.return_value
@@ -78,3 +83,24 @@ class TestCelerySentinelConnectionPool(object):
 
         assert p.get_master_address() == 'foo'
         assert not mock_super_get_master_address.called
+
+
+class TestShortLivedStrictRedis(object):
+    @mock.patch.object(StrictRedis, 'execute_command')
+    def test_execute_command(self, mock_execute_command):
+        r = ShortLivedStrictRedis()
+        r.connection_pool = mock.Mock()
+
+        result = r.execute_command('get', 'foo')
+
+        assert result == mock_execute_command.return_value
+        mock_execute_command.assert_called_once_with('get', 'foo')
+        r.connection_pool.disconnect.assert_called_once_with()
+
+
+class TestShortLivedSentinel(object):
+    def test_init(self):
+        sentinel = ShortLivedSentinel([('localhost', '1'), ('localhost', '2')])
+
+        for s in sentinel.sentinels:
+            assert isinstance(s, ShortLivedStrictRedis)

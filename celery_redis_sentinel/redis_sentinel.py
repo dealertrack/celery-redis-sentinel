@@ -7,57 +7,6 @@ from redis import ConnectionError, StrictRedis, TimeoutError
 from redis.sentinel import Sentinel, SentinelConnectionPool
 
 
-def get_redis_via_sentinel(db,
-                           sentinels,
-                           service_name,
-                           socket_timeout=0.1,
-                           redis_class=StrictRedis,
-                           connection_pool_class=SentinelConnectionPool,
-                           **kwargs):
-    """
-    Helper function for getting ``Redis`` instance via sentinel
-    with sentinel connection pool
-
-    Parameters
-    ----------
-    db : int, str
-        Redis DB to which connection should be established to.
-        In most cases this should be ``0`` DB.
-    sentinels : list
-        List of tuples of all sentinel nodes within the sentinel cluster.
-        Each tuple should be of format ``(ip, port)``.
-    service_name : str
-        Name of the sentinel service_name.
-    socket_timeout : float, optional
-        Socket timeout value. By default ``0.1`` is used.
-    redis_class : type, optional
-        Class to be used for the ``Redis`` being returned.
-        By default ``StrictRedis`` is used.
-        This is useful since sometimes ``Redis`` needs to be used
-        instead of ``StrictRedis``. For example ``Channel`` implementation
-        in ``kombu`` uses ``Redis`` instead of ``StrictRedis``.
-    connection_pool_class : type, optional
-        Class to be used for the connection pool.
-        By default ``SentinelConnectionPool`` is used.
-
-    Returns
-    -------
-    Redis
-        Connected ``Redis`` instance with sentinel connection pool
-    """
-    sentinel = Sentinel(
-        sentinels,
-        socket_timeout=socket_timeout,
-    )
-    return sentinel.master_for(
-        service_name,
-        socket_timeout=socket_timeout,
-        db=db,
-        redis_class=redis_class,
-        connection_pool_class=connection_pool_class,
-    )
-
-
 def ensure_redis_call(f, *args, **kwargs):
     """
     Helper for executing any callable with retry-logic for when
@@ -169,3 +118,101 @@ class CelerySentinelConnectionPool(SentinelConnectionPool):
         if self.master_address:
             return self.master_address
         return super(CelerySentinelConnectionPool, self).get_master_address()
+
+
+class ShortLivedStrictRedis(StrictRedis):
+    """
+    Custom ``StrictRedis`` which disconnects from redis after sending any command to redis.
+
+    This is really useful in 2 scenarios:
+
+    1. Connections made to redis server via firewall. When firewall closes the connection
+       redis will not always notice that and so will not release the connection.
+       As a result connections maxlimit eventually will be reached as more clients
+       will be connecting.
+    2. When the connection is used to make only very few queries. In sentinel case,
+       sentinel is only used once to query the master address. There is no need
+       to maintain the connection after master address is found and so the
+       connection can be closed.
+    """
+
+    def execute_command(self, *args, **options):
+        """
+        In addition to executing redis command, this method closes the redis connection
+        """
+        try:
+            return super(ShortLivedStrictRedis, self).execute_command(*args, **options)
+        finally:
+            self.connection_pool.disconnect()
+
+
+class ShortLivedSentinel(Sentinel):
+    """
+    Custom ``Sentinel`` implementation which uses :py:class:`.ShortLivedStrictRedis`
+    to query sentinel for information.
+
+    That assures that sentinel connection is being opened when sentinel is being
+    queried. After the query is successful, sentinel connection is closed.
+    """
+
+    def __init__(self, sentinels, *args, **kwargs):
+        super(ShortLivedSentinel, self).__init__(sentinels, *args, **kwargs)
+        self.sentinels = [
+            ShortLivedStrictRedis(hostname, port, **self.sentinel_kwargs)
+            for hostname, port in sentinels
+        ]
+
+
+def get_redis_via_sentinel(db,
+                           sentinels,
+                           service_name,
+                           socket_timeout=0.1,
+                           redis_class=StrictRedis,
+                           sentinel_class=ShortLivedSentinel,
+                           connection_pool_class=SentinelConnectionPool,
+                           **kwargs):
+    """
+    Helper function for getting ``Redis`` instance via sentinel
+    with sentinel connection pool
+
+    Parameters
+    ----------
+    db : int, str
+        Redis DB to which connection should be established to.
+        In most cases this should be ``0`` DB.
+    sentinels : list
+        List of tuples of all sentinel nodes within the sentinel cluster.
+        Each tuple should be of format ``(ip, port)``.
+    service_name : str
+        Name of the sentinel service_name.
+    socket_timeout : float, optional
+        Socket timeout value. By default ``0.1`` is used.
+    redis_class : type, optional
+        Class to be used for the ``Redis`` being returned.
+        By default ``StrictRedis`` is used.
+        This is useful since sometimes ``Redis`` needs to be used
+        instead of ``StrictRedis``. For example ``Channel`` implementation
+        in ``kombu`` uses ``Redis`` instead of ``StrictRedis``.
+    sentinel_class : type, optional
+        Class to be used for the ``Sentinel`` being used to return
+        redis client. By default :py:class:`.ShortLivedSentinel` is used.
+    connection_pool_class : type, optional
+        Class to be used for the connection pool.
+        By default ``SentinelConnectionPool`` is used.
+
+    Returns
+    -------
+    Redis
+        Connected ``Redis`` instance with sentinel connection pool
+    """
+    sentinel = sentinel_class(
+        sentinels,
+        socket_timeout=socket_timeout,
+    )
+    return sentinel.master_for(
+        service_name,
+        socket_timeout=socket_timeout,
+        db=db,
+        redis_class=redis_class,
+        connection_pool_class=connection_pool_class,
+    )
