@@ -14,7 +14,7 @@ Development Lead
 Contributors
 ~~~~~~~~~~~~
 
-None yet. Why not be the first?
+* Andrey Kostakov - https://github.com/AyumuKasuga
 
 .. _dealertrack GitHub: https://github.com/Dealertrack
 .. _dealertrack technologies: https://www.dealertrack.com
