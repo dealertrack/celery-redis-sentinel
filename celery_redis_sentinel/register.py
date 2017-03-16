@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
+
 import celery
+from kombu.transport import TRANSPORT_ALIASES
+
+from .backend import RedisSentinelBackend
+from .transport import SentinelTransport
 
 if celery.VERSION.major < 4:
     from celery.backends import BACKEND_ALIASES
 else:
     from celery.app.backends import BACKEND_ALIASES
-
-from kombu.transport import TRANSPORT_ALIASES
-
-from .backend import RedisSentinelBackend
-from .transport import SentinelTransport
 
 
 def get_class_path(cls):
